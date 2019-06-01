@@ -1,0 +1,37 @@
+body {
+	/*background-color: #F5F5F5;*/
+	font-family: 'Samurai', 'Noto Sans TC', 'Arial', sans-serif;
+	font-size: 12pt;
+	width: 0px auto;
+}
+h1 {
+	text-align: center;
+	font-weight: bold;
+	margin-bottom: 20px;
+}
+.Square {
+	padding: 31px;
+	margin: 6px auto;
+	border-radius: 6px;
+}
+.table {
+	width: 700px;
+	margin: 0 auto;
+}
+th {
+  text-align: center;
+  background-color: #9e9e9e;
+  color: white;
+}
+td {
+  border: 1px solid #ddd;
+}
+.grade {
+	text-align: center;
+}
+.upgrade {
+	color: red;
+}
+.downgrade {
+	color: green;
+}
