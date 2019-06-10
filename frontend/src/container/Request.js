@@ -10,12 +10,15 @@ class Request extends Component {
     this.state = {data: [
         {student: "Mark",
         identity: "good student",
+         website: "10.1.2.3",
            state: "downgrade"},
         {student: "Jacob",
         identity: "bad student",
+         website: "10.1.2.3",
            state: "upgrade"},
         {student: "Larry",
         identity: "good student",
+         website: "10.1.2.3",
            state: "downgrade"}]};
     }
 
@@ -27,13 +30,14 @@ class Request extends Component {
     render() {
         return (
         <div className="square">
-            <h1>Request</h1>
+            <h1 className="table">Request</h1>
             <table className="request_table">
                 <thead>
                     <tr>
                       <th scope="col">#</th>
                       <th scope="col">Student</th>
                       <th scope="col">Identity</th>
+                      <th scope="col">Request Website</th>
                       <th scope="col"></th>
                     </tr>
                 </thead>
@@ -43,6 +47,7 @@ class Request extends Component {
                         e => <RequestList id={this.state.data.indexOf(e)}
                                      student={e.student}
                                      identity={e.identity}
+                                     website={e.website}
                                      state={e.state}
                                      click={this.allow}/>
                     )
