@@ -18,14 +18,20 @@ class Admin extends Component {
         /* 前往request頁面 */
     }
 
+    Logout = e => {
+        console.log("admin logout");
+        /* 前往request頁面 */
+    }
+
     render() {
         return (
         <div className="ButtonList">
             <h1>Welcome, Admin</h1>
             <h2>Keep an eye on your students!</h2>
             <div className="Buttons">
-               <button type="button" className="btn-lg btn-outline-primary" onClick={this.Monitor}>Monitor</button>
-                <button type="button" className="btn-lg btn-outline-primary" onClick={this.Request}>Request</button>
+              <button type="button" className="btn-lg btn-outline-primary" onClick={this.Monitor}>Monitor</button>
+              <button type="button" className="btn-lg btn-outline-primary" onClick={this.Request}>Request</button>
+              <button type="button" className="btn-lg btn-outline-primary" onClick={this.Logout}>Logout</button>
             </div>
             
 

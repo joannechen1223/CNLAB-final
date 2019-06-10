@@ -8,6 +8,11 @@ class Student extends Component {
     this.state = {speed: 18};
     }
 
+    Logout = e => {
+        console.log("student logout");
+        /* 前往request頁面 */
+    }
+
     render() {
         return (
         <div className="Square">
@@ -17,7 +22,7 @@ class Student extends Component {
                 <p>Your Internet Speed:</p>
                 <p className="num">{this.state.speed} Mbps</p>
             </div>
-            
+            <button type="button" className="btn-lg btn-outline-primary" onClick={this.Logout}>Logout</button>            
 
         </div>
         );

@@ -1,10 +1,7 @@
 import React, { Component } from 'react'
-
+import { Link } from "react-router-dom";
 import './Login.css'
 
-function sleep (time) {
-    return new Promise((resolve) => setTimeout(resolve, time));
-  }
 
 class Login extends Component {
     constructor(props) {
@@ -12,6 +9,8 @@ class Login extends Component {
         this.state = {
             account: '',
             password: '',
+            login: false,
+            type: '',
         };
         this.handleAccountChange = this.handleAccountChange.bind(this);
         this.handlePasswordChange = this.handlePasswordChange.bind(this);
@@ -46,6 +45,7 @@ class Login extends Component {
         console.log("SubmitTheForm");
         console.log(this.state.account);
         console.log(this.state.password);
+        console.log(this.state.type);
 
         /* 按下Submit之後 */
         fetch('/api/login', {
@@ -60,15 +60,26 @@ class Login extends Component {
             }),
         })
             .then((res) => (res.json(res)))
-            .then(() => {
-                console.log("hi");
-                // console.log(data.result);
+            .then((data) => {
+                console.log(data);
+                if(data.result === 'fail') {
+                    // login fail
+                    alert('Account or password input wrong!!!!');
+                } else {
+                    // login success
+                    window.location = `http://10.5.4.71:3000/${data.type}`;
+                }
+                
             })
         
     }
 
     render() {
-        return (
+      console.log(this.state);
+      if(this.state.login){
+          window.location = this.state.type;
+      }
+      return (
         <div className="form">
             <form>
                 <h1>Login</h1>
