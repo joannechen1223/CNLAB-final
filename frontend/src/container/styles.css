@@ -1,0 +1,102 @@
+body {
+	background-color: #F5F5F5;
+    font-family: 'Samurai', 'Noto Sans TC', 'Arial', sans-serif;
+    font-size: 16pt;
+    width: 0px auto;
+}
+h1 {
+	text-align: center;
+	font-weight: bold;
+	margin-bottom: 20px;
+}
+h2 {
+	text-align: center;
+	margin-bottom: 10px;
+}
+form {
+	width: 240px;
+	margin: auto;
+}
+th {
+	text-align: center;
+	background-color: #9e9e9e;
+	color: white;
+}
+td {
+	border: 1px solid #ddd;
+	padding: 6px;
+}
+span {
+	margin-top: 6px;
+}
+input {
+	margin-left: 6px;
+}
+.form {
+	background-color: #fff;
+	width: 340px;
+	padding: 31px;
+	margin: auto;
+	margin-top: 30vh;
+	border-radius: 6px;
+}
+.input {
+	margin-bottom: 20px;
+}
+.submit {
+	margin-left: 137px;
+}
+.ButtonList {
+	background-color: #fff;
+	width: 340px;
+	padding: 31px;
+	margin: auto;
+	margin-top: 30vh;
+	border-radius: 6px;
+}
+.button_admin {
+	width: 95%;
+	margin-left: 6px;
+	margin-bottom: 10px;
+}
+.Buttons {
+	width: 100%;
+}
+.square {
+	padding: 31px;
+	margin: 6px auto;
+	border-radius: 6px;
+}
+.student_square {
+	background-color: #fff;
+	width: 340px;
+	padding: 31px;
+	margin: auto;
+	margin-top: 30vh;
+	border-radius: 6px;
+}
+.monitor_table {
+	width: 80%;
+	margin: 0 auto;
+}
+.request_table {
+	width: 700px;
+	margin: 0 auto;
+}
+.grade {
+	text-align: center;
+}
+.upgrade {
+	color: red;
+}
+.downgrade {
+	color: green;
+}
+.Speed {
+	margin-top: 60px;
+	text-align: center;
+}
+.num {
+	font-size: 25pt;
+	font-weight: bold;
+}

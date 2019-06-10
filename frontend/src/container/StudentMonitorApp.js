@@ -5,7 +5,6 @@ import Admin from './Admin';
 import Student from './Student';
 import Request from './Request';
 import Monitor from './Monitor';
-import './Student.css'
 
 class StudentMonitorApp extends Component {
     constructor(props) {

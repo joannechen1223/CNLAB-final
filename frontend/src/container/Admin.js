@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import './Admin.css'
+// import './Admin.css'
 
 class Admin extends Component {
     constructor(props) {
@@ -26,12 +26,12 @@ class Admin extends Component {
     render() {
         return (
         <div className="ButtonList">
-            <h1>Welcome, Admin</h1>
+            <h1 className="h1_admin">Welcome, Admin</h1>
             <h2>Keep an eye on your students!</h2>
             <div className="Buttons">
-              <button type="button" className="btn-lg btn-outline-primary" onClick={this.Monitor}>Monitor</button>
-              <button type="button" className="btn-lg btn-outline-primary" onClick={this.Request}>Request</button>
-              <button type="button" className="btn-lg btn-outline-primary" onClick={this.Logout}>Logout</button>
+              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.Monitor}>Monitor</button>
+              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.Request}>Request</button>
+              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.Logout}>Logout</button>
             </div>
             
 

@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import './Request.css'
+// import './Request.css'
 import RequestList from '../component/RequestList.js'
 
 class Request extends Component {
@@ -26,9 +26,9 @@ class Request extends Component {
 
     render() {
         return (
-        <div className="Square">
+        <div className="square">
             <h1>Request</h1>
-            <table className="table">
+            <table className="request_table">
                 <thead>
                     <tr>
                       <th scope="col">#</th>
