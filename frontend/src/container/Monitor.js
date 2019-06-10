@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import './Monitor.css'
+// import './Monitor.css'
 import MonitorList from '../component/MonitorList.js'
 
 class Monitor extends Component {
@@ -36,9 +36,9 @@ class Monitor extends Component {
 
     render() {
         return (
-        <div className="Square">
+        <div className="square">
             <h1>Monitor</h1>
-            <table className="table">
+            <table className="monitor_table">
                 <thead>
                     <tr>
                       <th scope="col">#</th>
