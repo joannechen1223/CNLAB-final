@@ -43,9 +43,9 @@ class Login extends Component {
 
     SubmitTheForm = e => {
         console.log("SubmitTheForm");
-        console.log(this.state.account);
-        console.log(this.state.password);
-        console.log(this.state.type);
+        // console.log(this.state.account);
+        // console.log(this.state.password);
+        // console.log(this.state.type);
 
         /* 按下Submit之後 */
         fetch('/api/login', {
@@ -59,7 +59,10 @@ class Login extends Component {
                 password: this.state.password,
             }),
         })
-            .then((res) => (res.json(res)))
+            .then((res) => {
+                console.log("hihi");
+                return res.json(res)
+            })
             .then((data) => {
                 console.log(data);
                 if(data.result === 'fail') {
@@ -67,6 +70,7 @@ class Login extends Component {
                     alert('Account or password input wrong!!!!');
                 } else {
                     // login success
+                    console.log(`http://10.5.4.71:3000/${data.type}`);
                     window.location = `http://10.5.4.71:3000/${data.type}`;
                 }
                 
@@ -76,9 +80,6 @@ class Login extends Component {
 
     render() {
       console.log(this.state);
-      if(this.state.login){
-          window.location = this.state.type;
-      }
       return (
         <div className="form">
             <form>
@@ -91,7 +92,7 @@ class Login extends Component {
                     <span className="glyphicon glyphicon-lock"></span>
                     <input type="text" className="col-sm-10 form-control" id="time" placeholder="password" onChange={this.handlePasswordChange} />
                 </div>
-                <button className="btn btn-light" onClick={this.RegisterTheForm} >Register</button>
+                <button className="btn btn-light" >Register</button>
                 <button className="btn btn-primary submit" onClick={this.SubmitTheForm} >Submit</button>
             </form>
         </div>

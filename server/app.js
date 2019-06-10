@@ -28,7 +28,7 @@ app.get(/\/*/, (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log(`${ip} is asking for wifi`);
   // res.setHeader("Content-type", "text/html")
-  res.redirect(`http://${myIp}:3000`);
+  // res.redirect(`http://${myIp}:3000`);
 //   res.setHeader('Content-type', 'text/html');
 //   res.send(`
 // 	<html>
@@ -49,8 +49,8 @@ app.post('/api/login', (req, res) => {
   const { password } = req.body;
   const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log(account, password, remoteIp);
-  const rejectIp = '157.240.15.35';    // facebook domain
-  const acceptIp = '140.112.0.0/16';   // NTU domain
+  const rejectIp = ['104.31.230.9', '104.31.231.9', '34.96.117.106']; // facebook domain
+  const acceptIp = '140.112.0.0/16'; // NTU domain
   if (account === 'admin' && password === 'admin') {
     // admin
     users[0].login = true;
@@ -64,6 +64,9 @@ app.post('/api/login', (req, res) => {
   } else {
     // student
     let exist = false;
+    let studentChecker = new Promise((resolve, reject) => {
+
+    });
     for (let i = 0; i < users.length; i += 1) {
       console.log(users[i]);
       if (account === users[i].account && password === users[i].password) {
@@ -72,17 +75,20 @@ app.post('/api/login', (req, res) => {
         users[i].login = true;
         if (users[i].type === 1) {
           // good student
+
           // available for all websites
           spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', remoteIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-I', 'FORWARD', '-d', remoteIp, '-j', 'ACCEPT']);
 
-          // reject for facebook
-          spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-d', rejectIp, '-j', 'DROP']);
-          spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', rejectIp, '-d', remoteIp, '-j', 'DROP']);
-          spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-d', rejectIp, '-j', 'DROP']);
-          spawn('iptables', ['-I', 'FORWARD', '-s', rejectIp, '-d', remoteIp, '-j', 'DROP']);
+          // // reject for facebook
+          for (let j = 0; j < rejectIp.length; j += 1) {
+            spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-d', rejectIp[j], '-j', 'DROP']);
+            spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', rejectIp[j], '-d', remoteIp, '-j', 'DROP']);
+            spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-d', rejectIp[j], '-j', 'DROP']);
+            spawn('iptables', ['-I', 'FORWARD', '-s', rejectIp[j], '-d', remoteIp, '-j', 'DROP']);
+          }
         } else if (users[i].type === 2) {
           // bad student
           // non availanle for all websites
@@ -97,40 +103,21 @@ app.post('/api/login', (req, res) => {
           spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-d', acceptIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-I', 'FORWARD', '-s', acceptIp, '-d', remoteIp, '-j', 'ACCEPT']);
         }
-        exist = true;
+        exist = true;     
         break;
       }
     }
+    // console.log(res);
     if (exist) {
-      // login success
-      res.send(JSON.stringify({ result: 'success', type: 'student' }));
+      console.log("exist");
+      const json = { result: 'success', type: 'student' }
+      res.send(JSON.stringify(json));
+      console.log("exist!!!!!!!!");
+
     } else {
+      console.log("not exist");
       res.send(JSON.stringify({ result: 'fail' }));
     }
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remote_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', remote_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-I', 'FORWARD', '-s', remote_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-I', 'FORWARD', '-d', remote_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remote_ip, '-j', 'DROP']);
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', remote_ip, '-j', 'DROP']);
-    // spawn('iptables', ['-I', 'FORWARD', '-s', remote_ip, '-j', 'DROP']);
-    // spawn('iptables', ['-I', 'FORWARD', '-d', remote_ip, '-j', 'DROP']);
-
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remote_ip, '-d', accept_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', accept_ip, '-d', remote_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-I', 'FORWARD', '-s', remote_ip, '-d', accept_ip, '-j', 'ACCEPT']);
-    // spawn('iptables', ['-I', 'FORWARD', '-s', accept_ip, '-d', remote_ip, '-j', 'ACCEPT']);
-
-
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remote_ip, '-d', reject_ip, '-j', 'DROP']);
-    // spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', reject_ip, '-d', remote_ip, '-j', 'DROP']);
-    // spawn('iptables', ['-I', 'FORWARD', '-s', remote_ip, '-d', reject_ip, '-j', 'DROP']);
-    // spawn('iptables', ['-I', 'FORWARD', '-s', reject_ip, '-d', remote_ip, '-j', 'DROP']);
-
-    // spawn('iptables', ['-t', 'nat', '-A' ,'PREROUTING' ,'-j', 'blockfacebook']);
-    // spawn('iptables', ['-t', 'nat', '-A' ,'blockfacebook' ,'-s', remote_ip, '-d', 'facebook.com', '-j', 'DROP']);
-    // spawn('iptables', ['-t', 'nat', '-A' ,'blockfacebook' ,'-s', remote_ip, '-d', 'www.facebook.com', '-j', 'DROP']);
-    // spawn('iptables', ['-t', 'nat', '-A' ,'blockfacebook' ,'-s', remote_ip, '-d', 'apps.facebook.com', '-j', 'DROP']);
   }
 });
 
