@@ -116,11 +116,11 @@ class Login extends Component {
                 <h1 className="h1_login">Login</h1>
                 <div className="form-group row input">
                     <span className="glyphicon glyphicon-user"></span>
-                    <input type="text" className="col-sm-10 form-control" id="date" placeholder="account" onChange={this.handleAccountChange}/>
+                    <input type="text" className="col-sm-10 form-control login" id="date" placeholder="account" onChange={this.handleAccountChange}/>
                 </div>
                 <div className="form-group row input">
                     <span className="glyphicon glyphicon-lock"></span>
-                    <input type="text" className="col-sm-10 form-control" id="time" placeholder="password" onChange={this.handlePasswordChange} />
+                    <input type="text" className="col-sm-10 form-control login" id="time" placeholder="password" onChange={this.handlePasswordChange} />
                 </div>
                 <button className="btn btn-light button" onClick={this.RegisterTheForm} >Register</button>
                 <button className="btn btn-primary submit" onClick={this.SubmitTheForm} >Submit</button>

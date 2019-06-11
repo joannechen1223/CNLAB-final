@@ -37,7 +37,7 @@ class Monitor extends Component {
     render() {
         return (
         <div className="square">
-            <h1>Monitor</h1>
+            <h1 className="table">Monitor</h1>
             <table className="monitor_table">
                 <thead>
                     <tr>
