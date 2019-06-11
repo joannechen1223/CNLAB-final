@@ -5,7 +5,6 @@ module.exports = {
       account: 'admin',
       password: 'admin',
       type: 0,
-      login: false,
       ip: '',
     },
     {
@@ -13,7 +12,6 @@ module.exports = {
       account: 'good',
       password: 'good',
       type: 1,
-      login: false,
       ip: '',
     },
     {
@@ -21,8 +19,15 @@ module.exports = {
       account: 'bad',
       password: 'bad',
       type: 2,
-      login: false,
       ip: '',
     },
+  ],
+  rejectIp: [
+    '104.31.230.9',
+    '104.31.231.9',
+    '34.96.117.106',
+  ],
+  acceptIp: [
+    '140.112.0.0/16',
   ],
 };

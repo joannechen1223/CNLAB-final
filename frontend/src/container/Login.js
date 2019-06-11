@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Link } from "react-router-dom";
 import './styles.css'
 
 
@@ -39,13 +38,30 @@ class Login extends Component {
         /* 按下Register之後 */
         console.log(this.state.account);
         console.log(this.state.password);
+
+        fetch('/api/register', {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                account: this.state.account,
+                password: this.state.password,
+            }),
+        })
+            .then((res) => (res.json(res)))
+            .then((data) => {
+                if (data.result === 'success') {
+                    alert("Register success! Login and surf the net!!");
+                } else {
+                    alert("The account is already exist!!");
+                }
+            })
     }
 
     SubmitTheForm = e => {
         console.log("SubmitTheForm");
-        // console.log(this.state.account);
-        // console.log(this.state.password);
-        // console.log(this.state.type);
 
         /* 按下Submit之後 */
         fetch('/api/login', {
@@ -59,10 +75,7 @@ class Login extends Component {
                 password: this.state.password,
             }),
         })
-            .then((res) => {
-                console.log("hihi");
-                return res.json(res)
-            })
+            .then((res) => (res.json(res)))
             .then((data) => {
                 console.log(data);
                 if(data.result === 'fail') {
@@ -75,14 +88,31 @@ class Login extends Component {
                 }
                 
             })
-        
+    }
+
+    checkLogin() {
+        fetch('/api/checkLogin', {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        })
+            .then((res) => (res.json(res)))
+            .then((data) => {
+                console.log(data);
+                if (data.login) {
+                    // login fail
+                    window.location = `http://10.5.4.71:3000/${data.type}`;
+                }
+            })
     }
 
     render() {
-      console.log(this.state);
+      this.checkLogin();
       return (
         <div className="form">
-            <form>
+            
                 <h1 className="h1_login">Login</h1>
                 <div className="form-group row input">
                     <span className="glyphicon glyphicon-user"></span>
@@ -94,7 +124,7 @@ class Login extends Component {
                 </div>
                 <button className="btn btn-light button" onClick={this.RegisterTheForm} >Register</button>
                 <button className="btn btn-primary submit" onClick={this.SubmitTheForm} >Submit</button>
-            </form>
+            
         </div>
         );
     }

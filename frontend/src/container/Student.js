@@ -11,6 +11,20 @@ class Student extends Component {
     Logout = e => {
         console.log("student logout");
         /* 前往request頁面 */
+        fetch('/api/logout', {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        })
+            .then((res) => (res.json(res)))
+            .then((data) => {
+                if (data.logout === 'success') {
+                    // logout success
+                    window.location = `http://10.5.4.71:3000`;
+                }
+            })
     }
 
     render() {

@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { spawn } = require('child_process');
-const { users } = require('./data.js');
+const { users, rejectIp, acceptIp } = require('./data.js');
 
 console.log(users);
 
@@ -27,20 +27,7 @@ spawn('iptables', ['-t', 'nat', '-A', 'PREROUTING', '-i', 'wlx74da38db1813', '-p
 app.get(/\/*/, (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log(`${ip} is asking for wifi`);
-  // res.setHeader("Content-type", "text/html")
-  // res.redirect(`http://${myIp}:3000`);
-//   res.setHeader('Content-type', 'text/html');
-//   res.send(`
-// 	<html>
-// 		<form action="api/login" method="post">
-// 			name: <input type="text" name="name" />
-// 			</br>
-// 			password: <input type="password" name="password" />
-// 			</br>
-// 			<button>GO!</button>
-// 		</form>
-// 	</html>
-// 	`);
+  res.redirect(`http://${myIp}:3000`);
 });
 
 app.post('/api/login', (req, res) => {
@@ -49,11 +36,8 @@ app.post('/api/login', (req, res) => {
   const { password } = req.body;
   const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log(account, password, remoteIp);
-  const rejectIp = ['104.31.230.9', '104.31.231.9', '34.96.117.106']; // facebook domain
-  const acceptIp = '140.112.0.0/16'; // NTU domain
   if (account === 'admin' && password === 'admin') {
     // admin
-    users[0].login = true;
     users[0].ip = remoteIp;
     res.send(JSON.stringify({ result: 'success', type: 'admin' }));
     // 修改防火牆 並且把此人ip記下來
@@ -64,25 +48,19 @@ app.post('/api/login', (req, res) => {
   } else {
     // student
     let exist = false;
-    let studentChecker = new Promise((resolve, reject) => {
-
-    });
     for (let i = 0; i < users.length; i += 1) {
-      console.log(users[i]);
       if (account === users[i].account && password === users[i].password) {
         // exist user data
         users[i].ip = remoteIp;
-        users[i].login = true;
         if (users[i].type === 1) {
           // good student
-
-          // available for all websites
+          // 可以上鎖有網頁
           spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', remoteIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-j', 'ACCEPT']);
           spawn('iptables', ['-I', 'FORWARD', '-d', remoteIp, '-j', 'ACCEPT']);
 
-          // // reject for facebook
+          // 封鎖某些特定網頁
           for (let j = 0; j < rejectIp.length; j += 1) {
             spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-d', rejectIp[j], '-j', 'DROP']);
             spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', rejectIp[j], '-d', remoteIp, '-j', 'DROP']);
@@ -91,33 +69,92 @@ app.post('/api/login', (req, res) => {
           }
         } else if (users[i].type === 2) {
           // bad student
-          // non availanle for all websites
+          // 封鎖全部網頁
           spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-j', 'DROP']);
           spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', remoteIp, '-j', 'DROP']);
           spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-j', 'DROP']);
           spawn('iptables', ['-I', 'FORWARD', '-d', remoteIp, '-j', 'DROP']);
 
-          // they can only go to NTU domain website
-          spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-d', acceptIp, '-j', 'ACCEPT']);
-          spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', acceptIp, '-d', remoteIp, '-j', 'ACCEPT']);
-          spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-d', acceptIp, '-j', 'ACCEPT']);
-          spawn('iptables', ['-I', 'FORWARD', '-s', acceptIp, '-d', remoteIp, '-j', 'ACCEPT']);
+          // 只能上某些特定網頁 e.g.台大domain下的網頁
+          for (let j = 0; j < acceptIp.length; j += 1) {
+            spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', remoteIp, '-d', acceptIp[j], '-j', 'ACCEPT']);
+            spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', acceptIp[j], '-d', remoteIp, '-j', 'ACCEPT']);
+            spawn('iptables', ['-I', 'FORWARD', '-s', remoteIp, '-d', acceptIp[j], '-j', 'ACCEPT']);
+            spawn('iptables', ['-I', 'FORWARD', '-s', acceptIp[j], '-d', remoteIp, '-j', 'ACCEPT']);
+          }
         }
-        exist = true;     
+        exist = true;
         break;
       }
     }
-    // console.log(res);
     if (exist) {
-      console.log("exist");
-      const json = { result: 'success', type: 'student' }
-      res.send(JSON.stringify(json));
-      console.log("exist!!!!!!!!");
-
+      res.send(JSON.stringify({ result: 'success', type: 'student' }));
     } else {
-      console.log("not exist");
       res.send(JSON.stringify({ result: 'fail' }));
     }
+  }
+});
+
+app.post('/api/checkLogin', (req, res) => {
+  // 確認此ip是否已經登入過
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  let check = false;
+  let type = 'student';
+  for (let i = 0; i < users.length; i += 1) {
+    if (users[i].ip === ip) {
+      if (users[i] === 0) {
+        type = 'admin';
+      }
+      check = true;
+      break;
+    }
+  }
+  if (check) {
+    res.send(JSON.stringify({ login: true, type }));
+  } else {
+    res.send(JSON.stringify({ login: false }));
+  }
+});
+
+app.post('/api/logout', (req, res) => {
+  // 確認此ip是否已經登入過
+  const logoutIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  for (let i = 0; i < users.length; i += 1) {
+    if (users[i].ip === logoutIp) {
+      users[i].ip = '';
+      spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', logoutIp, '-j', 'ACCEPT']);
+      spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-d', logoutIp, '-j', 'ACCEPT']);
+      spawn('iptables', ['-D', 'FORWARD', '-s', logoutIp, '-j', 'ACCEPT']);
+      spawn('iptables', ['-D', 'FORWARD', '-d', logoutIp, '-j', 'ACCEPT']);
+      // TODOS: 沒辦法刪掉所有跟這個ip有關的規則
+      break;
+    }
+  }
+  res.send(JSON.stringify({ logout: 'success' }));
+});
+
+app.post('/api/register', (req, res) => {
+  // 判斷account是否被註冊過
+  const { account } = req.body;
+  const { password } = req.body;
+  let exist = false;
+  for (let i = 0; i < users.length; i += 1) {
+    if (users[i].account === account) {
+      exist = true;
+      break;
+    }
+  }
+  if (exist) {
+    res.send(JSON.stringify({ result: 'fail' }));
+  } else {
+    users.push({
+      userId: users.length,
+      account,
+      password,
+      type: 1,
+      ip: '',
+    });
+    res.send(JSON.stringify({ result: 'success' }));
   }
 });
 

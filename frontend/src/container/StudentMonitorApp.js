@@ -26,7 +26,6 @@ class StudentMonitorApp extends Component {
         </div>
         );
     }
-        
 }
 
 export default StudentMonitorApp;
