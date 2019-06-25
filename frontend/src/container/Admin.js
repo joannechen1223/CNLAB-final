@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-
+import { Link } from "react-router-dom";
 // import './Admin.css'
 
 class Admin extends Component {
@@ -8,19 +8,26 @@ class Admin extends Component {
     this.state = {};
     }
 
-    Monitor = e => {
-        console.log("go to Monitor Page");
-        /* 前往monitor頁面 */
-    }
+    
 
-    Request = e => {
-        console.log("go to Request Page");
-        /* 前往request頁面 */
-    }
+    
 
     Logout = e => {
         console.log("admin logout");
-        /* 前往request頁面 */
+        fetch('/api/logout', {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        })
+            .then((res) => (res.json(res)))
+            .then((data) => {
+                if (data.logout === 'success') {
+                    // logout success
+                    window.location = `http://10.5.4.71:3000`;
+                }
+            })
     }
 
     render() {
@@ -29,12 +36,14 @@ class Admin extends Component {
             <h1 className="h1_admin">Welcome, Admin</h1>
             <h2>Keep an eye on your students!</h2>
             <div className="Buttons">
-              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.Monitor}>Monitor</button>
-              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.Request}>Request</button>
+            <Link to="/monitor">
+              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.props.Monitor}>Monitor</button>
+            </Link>
+            <Link to="/request">
+              <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.props.getRequest}>Request</button>
+            </Link>
               <button type="button" className="btn-lg btn-outline-primary button_admin" onClick={this.Logout}>Logout</button>
             </div>
-            
-
         </div>
         );
     }

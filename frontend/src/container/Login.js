@@ -83,8 +83,8 @@ class Login extends Component {
                     alert('Account or password input wrong!!!!');
                 } else {
                     // login success
-                    console.log(`http://10.5.4.71:3000/${data.type}`);
-                    window.location = `http://10.5.4.71:3000/${data.type}`;
+                    console.log(`http://10.5.0.231:3000/${data.type}`);
+                    window.location = `http://10.5.0.231:3000/${data.type}`;
                 }
                 
             })
@@ -103,7 +103,7 @@ class Login extends Component {
                 console.log(data);
                 if (data.login) {
                     // login fail
-                    window.location = `http://10.5.4.71:3000/${data.type}`;
+                    window.location = `http://10.5.0.231:3000/${data.type}`;
                 }
             })
     }

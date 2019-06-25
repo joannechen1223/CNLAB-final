@@ -8,7 +8,7 @@ console.log(users);
 const app = express();
 
 
-const myIp = '10.5.4.71';
+const myIp = '10.5.0.231';
 const myPort = '8889';
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -117,20 +117,38 @@ app.post('/api/checkLogin', (req, res) => {
 });
 
 app.post('/api/logout', (req, res) => {
-  // 確認此ip是否已經登入過
   const logoutIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   for (let i = 0; i < users.length; i += 1) {
     if (users[i].ip === logoutIp) {
       users[i].ip = '';
-      spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', logoutIp, '-j', 'ACCEPT']);
-      spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-d', logoutIp, '-j', 'ACCEPT']);
-      spawn('iptables', ['-D', 'FORWARD', '-s', logoutIp, '-j', 'ACCEPT']);
-      spawn('iptables', ['-D', 'FORWARD', '-d', logoutIp, '-j', 'ACCEPT']);
-      // TODOS: 沒辦法刪掉所有跟這個ip有關的規則
       break;
     }
   }
-  res.send(JSON.stringify({ logout: 'success' }));
+  console.log(logoutIp);
+  const child = spawn('iptables', ['-L', '-v', '-x']);
+  let send = false;
+  child.stdout.on('data', (data) => {
+    if (send === false) {
+      const rates = data.toString().split(/(\r?\n)/g);
+      let tokens;
+      for (let i = 0; i < rates.length; i += 1) {
+        tokens = rates[i].split(' ');
+        if (tokens[0] !== '' || tokens.length === 1) continue;
+        tokens = tokens.filter(token => token !== '');
+        if (tokens[7] === logoutIp || tokens[8] === logoutIp) {
+          console.log(tokens);
+          spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-j', tokens[2]]);
+          spawn('iptables', ['-D', 'FORWARD', '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-d', tokens[8], '-j', tokens[2]]);
+        }
+      }
+      res.send(JSON.stringify({ logout: 'success' }));
+      send = true;
+    }
+  });
 });
 
 app.post('/api/register', (req, res) => {
@@ -156,6 +174,268 @@ app.post('/api/register', (req, res) => {
     });
     res.send(JSON.stringify({ result: 'success' }));
   }
+});
+
+const speedLimit = true;
+
+app.post('/api/monitor', (req, res) => {
+  const userList = { };
+  for (let i = 1; i < users.length; i += 1) {
+    if (users[i].ip === '') continue;
+    userList[users[i].ip] = {
+      studentAccount: users[i].account,
+      flow: 0,
+      identity: users[i].type,
+    };
+  }
+
+  // console.log(userList);
+  const child = spawn('iptables', ['-L', '-v', '-x']);
+  let send = false;
+  child.stdout.on('data', (data) => {
+    if (send === false) {
+      const rates = data.toString().split(/(\r?\n)/g);
+      let tokens;
+      for (let i = 0; i < rates.length; i += 1) {
+        tokens = rates[i].split(' ');
+        if (tokens[0] !== '' || tokens.length === 1) continue;
+        tokens = tokens.filter(token => token !== '');
+        // console.log(tokens);
+        // console.log(tokens[2]);
+        if (tokens[2] === 'ACCEPT') {
+        // console.log(tokens[7], tokens[8]);
+          if (tokens[7] in userList) {
+            // console.log(`${tokens[7]}/s`);
+            userList[tokens[7]].flow += parseInt(tokens[1], 10);
+            // console.log(userList[tokens[7]].flow);
+          } else if (tokens[8] in userList) {
+            // console.log(`${tokens[8]}/d`);
+            userList[tokens[8]].flow += parseInt(tokens[1], 10);
+            // console.log(userList[tokens[8]].flow);
+          }
+        }
+      }
+      const threshold = 100000;
+
+      for (const limitIp in userList) {
+        
+        if (userList[limitIp].flow > threshold) {
+          for (let i = 0; i <= users.length; i += 1) {
+            if (limitIp === users[i].ip ) {
+              users[i].type = 2;
+              break;
+            }
+          }
+          // downgrade
+          const child = spawn('iptables', ['-L', '-v', '-x']);
+          let send = false;
+          child.stdout.on('data', (data) => {
+            if (send === false) {
+              const rates = data.toString().split(/(\r?\n)/g);
+              let tokens;
+              for (let i = 0; i < rates.length; i += 1) {
+                tokens = rates[i].split(' ');
+                if (tokens[0] !== '' || tokens.length === 1) continue;
+                tokens = tokens.filter(token => token !== '');
+                if (tokens[7] === limitIp || tokens[8] === limitIp) {
+                  console.log(tokens);
+                  spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+                  spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+                  spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-j', tokens[2]]);
+                  spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-j', tokens[2]]);
+                  spawn('iptables', ['-D', 'FORWARD', '-d', tokens[8], '-j', tokens[2]]);
+                  spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-d', tokens[8], '-j', tokens[2]]);
+                }
+              }
+              // bad student
+              // 封鎖全部網頁
+              spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', limitIp, '-j', 'DROP']);
+              spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', limitIp, '-j', 'DROP']);
+              spawn('iptables', ['-I', 'FORWARD', '-s', limitIp, '-j', 'DROP']);
+              spawn('iptables', ['-I', 'FORWARD', '-d', limitIp, '-j', 'DROP']);
+
+              // 只能上某些特定網頁 e.g.台大domain下的網頁
+              for (let j = 0; j < acceptIp.length; j += 1) {
+                spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', limitIp, '-d', acceptIp[j], '-j', 'ACCEPT']);
+                spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', acceptIp[j], '-d', limitIp, '-j', 'ACCEPT']);
+                spawn('iptables', ['-I', 'FORWARD', '-s', limitIp, '-d', acceptIp[j], '-j', 'ACCEPT']);
+                spawn('iptables', ['-I', 'FORWARD', '-s', acceptIp[j], '-d', limitIp, '-j', 'ACCEPT']);
+              }
+              send = true;
+            }
+          });
+
+          console.log(limitIp);
+          if (speedLimit) {
+            spawn('iptables', ['-A', 'FORWARD', '-s', limitIp, '-m', 'limit', '--limit', '60/s', '-j', 'ACCEPT']);
+            spawn('iptables', ['-A', 'FORWARD', '-s', limitIp, '-j', 'DROP']);
+          }
+        }
+      }
+
+      res.send(JSON.stringify(userList));
+      send = true;
+    }
+  });
+  // res.send(JSON.stringify(userList));
+});
+
+
+app.post('/api/downgrade', (req, res) => {
+  console.log('in downgrade api');
+  const downgradeAccount = req.body.account;
+  console.log(downgradeAccount);
+  let downgradeIp = '';
+  for (let i = 0; i <= users.length; i += 1) {
+    if (downgradeAccount === users[i].account) {
+      downgradeIp = users[i].ip;
+      users[i].type = 2;
+      break;
+    }
+  }
+  console.log(downgradeIp);
+  const child = spawn('iptables', ['-L', '-v', '-x']);
+  let send = false;
+  child.stdout.on('data', (data) => {
+    if (send === false) {
+      const rates = data.toString().split(/(\r?\n)/g);
+      let tokens;
+      for (let i = 0; i < rates.length; i += 1) {
+        tokens = rates[i].split(' ');
+        if (tokens[0] !== '' || tokens.length === 1) continue;
+        tokens = tokens.filter(token => token !== '');
+        if (tokens[7] === downgradeIp || tokens[8] === downgradeIp) {
+          console.log(tokens);
+          spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-j', tokens[2]]);
+          spawn('iptables', ['-D', 'FORWARD', '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-d', tokens[8], '-j', tokens[2]]);
+        }
+      }
+      // bad student
+      // 封鎖全部網頁
+      spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', downgradeIp, '-j', 'DROP']);
+      spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', downgradeIp, '-j', 'DROP']);
+      spawn('iptables', ['-I', 'FORWARD', '-s', downgradeIp, '-j', 'DROP']);
+      spawn('iptables', ['-I', 'FORWARD', '-d', downgradeIp, '-j', 'DROP']);
+
+      // 只能上某些特定網頁 e.g.台大domain下的網頁
+      for (let j = 0; j < acceptIp.length; j += 1) {
+        spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', downgradeIp, '-d', acceptIp[j], '-j', 'ACCEPT']);
+        spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', acceptIp[j], '-d', downgradeIp, '-j', 'ACCEPT']);
+        spawn('iptables', ['-I', 'FORWARD', '-s', downgradeIp, '-d', acceptIp[j], '-j', 'ACCEPT']);
+        spawn('iptables', ['-I', 'FORWARD', '-s', acceptIp[j], '-d', downgradeIp, '-j', 'ACCEPT']);
+      }
+      res.send(JSON.stringify({ upgrade: 'success' }));
+      send = true;
+    }
+  });
+  // res.send(JSON.stringify(userList));
+});
+
+app.post('/api/upgrade', (req, res) => {
+  console.log('in upgrade api');
+  const upgradeAccount = req.body.account;
+  console.log(upgradeAccount);
+  let upgradeIp = '';
+  for (let i = 0; i <= users.length; i += 1) {
+    if (upgradeAccount === users[i].account) {
+      upgradeIp = users[i].ip;
+      users[i].type = 1;
+      break;
+    }
+  }
+  console.log(upgradeIp);
+  const child = spawn('iptables', ['-L', '-v', '-x']);
+  let send = false;
+  child.stdout.on('data', (data) => {
+    if (send === false) {
+      const rates = data.toString().split(/(\r?\n)/g);
+      let tokens;
+      for (let i = 0; i < rates.length; i += 1) {
+        tokens = rates[i].split(' ');
+        if (tokens[0] !== '' || tokens.length === 1) continue;
+        tokens = tokens.filter(token => token !== '');
+        if (tokens[7] === upgradeIp || tokens[8] === upgradeIp) {
+          console.log(tokens);
+          spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-D', 'FORWARD', '-s', tokens[7], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-s', tokens[7], '-j', tokens[2]]);
+          spawn('iptables', ['-D', 'FORWARD', '-d', tokens[8], '-j', tokens[2]]);
+          spawn('iptables', ['-t', 'nat', '-D', 'PREROUTING', '-d', tokens[8], '-j', tokens[2]]);
+        }
+      }
+      // good student
+      // 可以上鎖有網頁
+      spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', upgradeIp, '-j', 'ACCEPT']);
+      spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-d', upgradeIp, '-j', 'ACCEPT']);
+      spawn('iptables', ['-I', 'FORWARD', '-s', upgradeIp, '-j', 'ACCEPT']);
+      spawn('iptables', ['-I', 'FORWARD', '-d', upgradeIp, '-j', 'ACCEPT']);
+
+      // 封鎖某些特定網頁
+      for (let j = 0; j < rejectIp.length; j += 1) {
+        spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', upgradeIp, '-d', rejectIp[j], '-j', 'DROP']);
+        spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', rejectIp[j], '-d', upgradeIp, '-j', 'DROP']);
+        spawn('iptables', ['-I', 'FORWARD', '-s', upgradeIp, '-d', rejectIp[j], '-j', 'DROP']);
+        spawn('iptables', ['-I', 'FORWARD', '-s', rejectIp[j], '-d', upgradeIp, '-j', 'DROP']);
+      }
+      res.send(JSON.stringify({ upgrade: 'success' }));
+      send = true;
+    }
+  });
+  // res.send(JSON.stringify(userList));
+});
+
+const requestList = [];
+
+app.post('/api/sendRequest', (req, res) => {
+  console.log('in send request api');
+  const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const { requestIp } = req.body;
+  for (let i = 0; i < users.length; i += 1) {
+    if (remoteIp === users[i].ip) {
+      let identity = 'good student';
+      if (users[i].type === 2) {
+        identity = 'bad student';
+      }
+      requestList.push({
+        student: users[i].account,
+        identity,
+        website: requestIp,
+      });
+      break;
+    }
+  }
+  res.send(JSON.stringify({ requestList }));
+});
+
+app.post('/api/getRequest', (req, res) => {
+  console.log('in get request api');
+  res.send(JSON.stringify({ requestList }));
+});
+
+app.post('/api/allow', (req, res) => {
+  console.log('in allow request api');
+  // const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const { requestID } = req.body;
+  for (let i = 0; i < users.length; i += 1) {
+    console.log(requestList[requestID]);
+    console.log(users[i].account);
+    if (requestList[requestID].student === users[i].account) {
+      console.log(requestList[requestID].student);
+      console.log(requestList[requestID].website);
+      spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', users[i].ip, '-d', requestList[requestID].website, '-j', 'ACCEPT']);
+      spawn('iptables', ['-t', 'nat', '-I', 'PREROUTING', '1', '-s', requestList[requestID].website, '-d', users[i].ip, '-j', 'ACCEPT']);
+      spawn('iptables', ['-I', 'FORWARD', '-s', users[i].ip, '-d', requestList[requestID].website, '-j', 'ACCEPT']);
+      spawn('iptables', ['-I', 'FORWARD', '-s', requestList[requestID].website, '-d', users[i].ip, '-j', 'ACCEPT']);
+      break;
+    }
+  }
+  requestList.splice(requestID, 1);
+  res.send(JSON.stringify({ allow: 'success' }));
 });
 
 app.listen(8889);

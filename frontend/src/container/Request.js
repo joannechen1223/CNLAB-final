@@ -7,27 +7,31 @@ class Request extends Component {
     constructor(props) {
     super(props);
     /* state 1 表示good student; state 2 表示bad student*/
-    this.state = {data: [
-        {student: "Mark",
-        identity: "good student",
-         website: "10.1.2.3",
-           state: "downgrade"},
-        {student: "Jacob",
-        identity: "bad student",
-         website: "10.1.2.3",
-           state: "upgrade"},
-        {student: "Larry",
-        identity: "good student",
-         website: "10.1.2.3",
-           state: "downgrade"}]};
     }
 
     allow = e => {
         /* 這裡要允許request */
-
+        const requestID = e.target.parentNode.parentNode.id;
+        console.log(requestID);
+        fetch('/api/allow', {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                requestID,
+            }),
+        })
+            .then((res) => (res.json(res)))
+            .then((data) => {
+                console.log(data);
+                this.props.getRequest();
+            })
     }
 
     render() {
+        const requestList = this.props.requestList;
         return (
         <div className="square">
             <h1 className="table">Request</h1>
@@ -43,17 +47,18 @@ class Request extends Component {
                 </thead>
                 <tbody>
                 {
-                    this.state.data.map(
-                        e => <RequestList id={this.state.data.indexOf(e)}
+                    this.props.requestList.map(
+                        e => <RequestList id={this.props.requestList.indexOf(e)}
                                      student={e.student}
                                      identity={e.identity}
                                      website={e.website}
-                                     state={e.state}
+                                     state={"allow"}
                                      click={this.allow}/>
                     )
                 }
                 </tbody>
             </table>
+            <button onClick={this.props.getRequest}>Refresh</button>
         </div>
         );
     }

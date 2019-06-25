@@ -8,6 +8,8 @@ class Student extends Component {
     this.state = {speed: 18};
     }
 
+    
+
     Logout = e => {
         console.log("student logout");
         /* 前往request頁面 */
@@ -22,7 +24,7 @@ class Student extends Component {
             .then((data) => {
                 if (data.logout === 'success') {
                     // logout success
-                    window.location = `http://10.5.4.71:3000`;
+                    window.location = `http://10.5.0.231:3000`;
                 }
             })
     }
@@ -36,8 +38,8 @@ class Student extends Component {
                 <p className="num">{this.state.speed} Mbps</p>
             </div>
             <div>
-                <input type="text" className="form-control request" placeholder="send request..." />
-                <button type="button" className="btn-lg btn-light">Request</button>
+                <input type="text" className="form-control request" id="request" placeholder="send request IP..." />
+                <button type="button" className="btn-lg btn-light" onClick={this.props.request}>Request</button>
             </div>
             <button type="button" className="btn-lg btn-outline-primary logout" onClick={this.Logout}>Logout</button>            
         </div>
